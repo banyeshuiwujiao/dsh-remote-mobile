@@ -1,0 +1,35 @@
+{
+  "name": "dsh-remote-mobile",
+  "version": "0.1.0",
+  "description": "Phone access to the DeepSeek Harness Desktop client over Tailscale: authenticated mobile reverse proxy with a responsive mobile layer.",
+  "type": "module",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./core": "./lib/core.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "assets",
+    "README.md",
+    "README.zh-CN.md"
+  ],
+  "scripts": {
+    "test": "node --test test/proxy.test.mjs test/plugin.test.mjs"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "dsh-plugin",
+    "remote",
+    "mobile",
+    "tailscale",
+    "proxy"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "author": "DeepSeek Harness local plugin"
+}

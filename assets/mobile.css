@@ -1,0 +1,67 @@
+/*
+ * dsh-remote-mobile — global mobile layer.
+ *
+ * Every rule is gated behind `html.dsh-mobile`, a class the injected script
+ * adds only for coarse pointers / narrow viewports. The desktop window and the
+ * web GUI at desktop widths are untouched.
+ */
+
+html.dsh-mobile {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overscroll-behavior-y: contain;
+}
+
+html.dsh-mobile body {
+  overscroll-behavior-y: contain;
+  max-width: 100vw;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html.dsh-mobile * {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/*
+ * iOS Safari zooms the page when a focused control is smaller than 16px.
+ * The composer is the main offender; keep the app's own line-height.
+ */
+html.dsh-mobile input:not([type='checkbox']):not([type='radio']),
+html.dsh-mobile textarea,
+html.dsh-mobile select {
+  font-size: 16px !important;
+}
+
+html.dsh-mobile button,
+html.dsh-mobile [role='button'],
+html.dsh-mobile a {
+  touch-action: manipulation;
+}
+
+/* Code blocks and tables keep their own scroll containers. */
+html.dsh-mobile pre,
+html.dsh-mobile table {
+  max-width: 100%;
+}
+
+/* A hairline scrollbar reads better than the desktop overlay on touch. */
+html.dsh-mobile ::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+/* PWA standalone: let the app paint under the status bar, but keep the
+   content clear of the notch when the frame has no safe-area handling. */
+@media (display-mode: standalone) {
+  html.dsh-mobile body {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+}
+
+/* No transition flashes while the sidebar is being toggled from the FAB. */
+@media (prefers-reduced-motion: reduce) {
+  html.dsh-mobile * {
+    scroll-behavior: auto !important;
+  }
+}
