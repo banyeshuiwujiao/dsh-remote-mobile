@@ -113,13 +113,31 @@ cd C:\Users\Admin\DeepSeek_Harness\dsh-client-config\plugins\dsh-remote-mobile\s
 
 【方式 2：Tailscale HTTPS 域名访问（支持 PWA 全屏安装）】
   👉 https://desktop-rf2a4jo.tail8c398c.ts.net/?key=K7M2QP9X4R
+
+【方式 3：Cloudflare Tunnel 公网直连（免 VPN，全球直达）】
+  👉 https://dsh-mobile.20261314.xyz/?key=APAE9BE6AA
 ==========================================================
 ```
 
 ### 第三步：手机端打开访问
-1. 确保手机已连接 **Tailscale** App，且处于同一个 Tailnet 局域网。
-2. 手机浏览器（Safari / Chrome / Edge）输入上述 `http://100.68.50.93:8788/?key=...` 链接。
+1. **若走 Tailscale 直连**：确保手机已连接 **Tailscale** App，且处于同一个 Tailnet 局域网。
+2. **若走 Cloudflare 隧道**：手机无需连接 VPN，直接在任意网络下打开 `https://dsh-mobile.20261314.xyz/?key=...`。
 3. 网页自动通过密钥建立会话并跳转至主界面，开始操控 DSH！
+
+---
+
+## 6. Cloudflare Tunnel 隧道守护与开机自启
+
+针对公网入口 `dsh-mobile.20261314.xyz`，系统部署了开机自启守护：
+
+- **守护脚本**：`C:\AITask\run-cloudflared.ps1`
+- **计划任务**：`DSH-Cloudflared-Tunnel`（开机/登录自动以最高权限在后台隐藏运行）
+- **日志文件**：`C:\ProgramData\.cloudflared\tunnel.log`
+- **核心避坑机制（v2rayN / sing-box TUN 冲突）**：
+  - 本机启用了 `sing-box` 的 TUN 虚拟网卡时，默认路由会将所有未豁免端口劫持进代理核心。
+  - 由于部分代理节点不支持 7844 端口的 QUIC / HTTP2 握手，会导致 `cloudflared` 报证书过期或重试超时（Error 1033）。
+  - 守护脚本在每次启动前**动态探测当前活动的物理网卡 IPv4**，并通过 `--edge-bind-address <物理IP>` 显式绑定出口网卡，直接绕过 TUN 虚拟网卡与代理拦截，确保 100% 稳定直连 Cloudflare Edge。
+
 
 ---
 
