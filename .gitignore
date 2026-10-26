@@ -1,0 +1,23 @@
+# --- 依赖 / 本地接线 ---------------------------------------------------------
+# 本插件不是 bundle 型：运行时靠 ~/.dsh/profiles/node_modules 做祖先解析，
+# 仓库里的 node_modules/ 是一个指向那里的 junction（连着 pnpm 的 hoisted
+# store 和一堆插件 junction）。它既不是仓库内容，也不能入库 —— 而且 git 遍历
+# 它会陷进 junction 递归里（node_modules/<self>/node_modules/<self>/...），
+# 每次 status 都刷一屏 "Function not implemented"。
+node_modules/
+
+# --- 日志 / 临时产物 ---------------------------------------------------------
+*.log
+*.tmp
+
+# --- 手工备份（回滚走 git 历史，不依赖这些） --------------------------------
+*.bak-*
+*.bak
+
+# --- Python 字节码（scripts/ 下有辅助脚本） ---------------------------------
+__pycache__/
+*.pyc
+
+# --- OS --------------------------------------------------------------------
+.DS_Store
+Thumbs.db
