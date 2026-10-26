@@ -186,7 +186,7 @@ function closeServer(server, sockets) {
   })
 }
 
-async function startCore(upstreamPort, accessKey = 'TESTKEY123') {
+async function startCore(upstreamPort, accessKey = 'TESTKEY123', options = {}) {
   const core = new RemoteMobileServer({
     upstreamOrigin: `http://127.0.0.1:${upstreamPort}`,
     launchToken: 'test-launch-token',
@@ -198,6 +198,7 @@ async function startCore(upstreamPort, accessKey = 'TESTKEY123') {
       allowedNetworks: ['127.0.0.0/8'],
       statusFile: '',
       urlFile: '',
+      ...options,
     }),
     log: () => {},
   })
@@ -440,5 +441,57 @@ describe('addressing and keys', () => {
     assert.equal(access.isAuthenticated({ headers: { host: '100.64.0.2:8788', cookie } }), true)
     assert.equal(access.isAuthenticated({ headers: { host: '100.64.0.3:8788', cookie } }), false)
     assert.equal(access.isAuthenticated({ headers: { host: '100.64.0.2:8788', cookie: 'dshm=v1.1.bad' } }), false)
+  })
+})
+
+describe('anonymous access (allowAnonymous)', () => {
+  let mock
+  let upstreamPort
+  let core
+
+  before(async () => {
+    mock = createMockUpstream()
+    upstreamPort = await listen(mock.server)
+    core = await startCore(upstreamPort, '', { allowAnonymous: true })
+  })
+
+  after(async () => {
+    await core.close()
+    await closeServer(mock.server, mock.sockets)
+  })
+
+  test('admits an allowed peer with no key and no cookie', async () => {
+    const response = await fetch(`http://127.0.0.1:${core.port}/`, { redirect: 'manual' })
+    assert.equal(response.status, 200)
+    assert.match(await response.text(), /Mock DSH/)
+  })
+
+  test('does not mint a session cookie', async () => {
+    const response = await fetch(`http://127.0.0.1:${core.port}/`, { redirect: 'manual' })
+    assert.equal((response.headers.getSetCookie?.() ?? []).length, 0)
+  })
+
+  test('a wrong key in the query no longer denies', async () => {
+    const response = await fetch(`http://127.0.0.1:${core.port}/?key=WRONGKEY`, { redirect: 'manual' })
+    assert.equal(response.status, 200)
+  })
+
+  test('status is readable without a cookie', async () => {
+    const response = await fetch(`http://127.0.0.1:${core.port}/_dsh-mobile/status`)
+    assert.equal(response.status, 200)
+  })
+
+  test('advertises URLs without a key', () => {
+    const urls = core.getUrls()
+    assert.ok(urls.length > 0)
+    for (const url of urls) assert.doesNotMatch(url, /key=/)
+  })
+
+  test('the network fence is independent of the auth flag', () => {
+    // allowAnonymous 只关掉第二道门（密钥/cookie）；peer 地址不在
+    // allowedNetworks 里仍然必须被拒，否则这个开关等于把门整个拆了。
+    assert.equal(core.config.allowAnonymous, true)
+    assert.equal(core.access.admitsPeer({ socket: { remoteAddress: '10.25.99.212' } }), false)
+    assert.equal(core.access.admitsPeer({ socket: { remoteAddress: '127.0.0.1' } }), true)
   })
 })
